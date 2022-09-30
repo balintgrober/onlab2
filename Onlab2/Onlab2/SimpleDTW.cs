@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SigStat.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,18 +19,12 @@ namespace Onlab2
             var m = s2.Length - 1;
 
             var dtw = new double[n + 1, m + 1];
-            for (int i = 0; i <= n; i++)
-            {
-                for (int j = 0; j <= m; j++)
-                {
-                    dtw[i, j] = Double.PositiveInfinity;
-                }
-            }
+            dtw.SetValues(Double.PositiveInfinity);
             dtw[0, 0] = 0;
 
-            for (int i = 0; i <= n; i++)
+            for (int i = 1; i <= n; i++)
             {
-                for (int j = 0; j <= m; j++)
+                for (int j = 1; j <= m; j++)
                 {
                     var cost = distance(s1[i], s2[j]);
                     dtw[i, j] = cost + Min(dtw[i - 1, j], dtw[i, j - 1], dtw[i - 1, j - 1]);
