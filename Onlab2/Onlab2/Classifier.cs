@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Onlab2
 {
 
-    /*public class SignerModel : ISignerModel
+    public class SignerModel : ISignerModel
     {
         public string SignerID { get; set; }
 
@@ -23,7 +23,7 @@ namespace Onlab2
     }
 
 
-    public class Classifier : PipelineBase, IDistanceClassifier
+    /*public class Classifier : PipelineBase, IDistanceClassifier
     {
         public Func<double[], double[], double> DistanceFunction { get; set; }
 

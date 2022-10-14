@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using SigStat.Common;
+using SigStat.Common.Algorithms.Distances;
 using SigStat.Common.Loaders;
 
 namespace Onlab2
@@ -29,18 +30,24 @@ namespace Onlab2
             List<double[]> sequence2 = signature2.GetAggregateFeature(featureDescriptors);
 
 
-            Console.WriteLine(signature1.GetFeature(Svc2004.Altitude)[4]);
-            Console.WriteLine();
-            Console.WriteLine();
-
-            foreach (var item in sequence1[0])
-            {
-                Console.WriteLine(item);
-            }
+            TestDTW(sequence1, sequence2);
 
             
 
             
         }
+
+        private static void TestDTW(List<double[]> sequence1, List<double[]> sequence2)
+        {
+            LocalDistance distance = new LocalDistance();
+
+            double simple_result = SimpleDTW.CalculateDTW(sequence1, sequence2, distance.Calculate);
+            double improved_result = ImprovedDTW.CalculateDTW(sequence1, sequence2, distance.Calculate, distance.LocalDifference);
+            
+
+            Console.WriteLine(simple_result);
+            Console.WriteLine(improved_result);
+        }
+
     }
 }

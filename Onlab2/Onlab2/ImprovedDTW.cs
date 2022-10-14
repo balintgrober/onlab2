@@ -29,7 +29,16 @@ namespace Onlab2
             {
                 for (int j = 1; j <= m; j++)
                 {
-                    var cost = distance(s1[i], s2[j]) * dist.Calculate(difference(s1[i - 1], s1[i], s1[i + 1]), difference(s2[j - 1], s2[j], s2[j + 1]));
+                    var cost = 0.0;
+                    if(i + 2 <= n && j + 2 <= m)
+                    {
+                        cost = distance(s1[i], s2[j]) * dist.Calculate(difference(s1[i], s1[i + 1], s1[i + 2]), difference(s2[j], s2[j + 1], s2[j + 2]));
+                    }
+                    else
+                    {
+                        cost = distance(s1[i], s2[j]);
+                    }
+                    
                     dtw[i, j] = cost;
                 }
             }
