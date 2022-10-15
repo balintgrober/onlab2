@@ -30,13 +30,13 @@ namespace Onlab2
                 for (int j = 1; j <= m; j++)
                 {
                     var cost = 0.0;
-                    if(i + 2 <= n && j + 2 <= m)
+                    if(i + 1 <= n && j + 1 <= m && i > 1 && j > 1)
                     {
-                        cost = distance(s1[i], s2[j]) * dist.Calculate(difference(s1[i], s1[i + 1], s1[i + 2]), difference(s2[j], s2[j + 1], s2[j + 2]));
+                        cost = distance(s1[i], s2[j]) * dist.Calculate(difference(s1[i - 1], s1[i], s1[i + 1]), difference(s2[j - 1], s2[j], s2[j + 1]));
                     }
                     else
                     {
-                        cost = distance(s1[i], s2[j]);
+                        cost = distance(s1[i], s2[j]) + Min(dtw[i - 1, j], dtw[i, j - 1], dtw[i - 1, j - 1]); ;
                     }
                     
                     dtw[i, j] = cost;
@@ -46,7 +46,13 @@ namespace Onlab2
             return dtw[n, m];
 
         }
-        
+
+        private static double Min(double d1, double d2, double d3)
+        {
+            double d12 = d1 > d2 ? d2 : d1;
+            return d12 > d3 ? d3 : d12;
+        }
+
 
     }
 }

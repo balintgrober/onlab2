@@ -23,23 +23,18 @@ namespace Onlab2
     }
 
 
-    /*public class Classifier : PipelineBase, IDistanceClassifier
+    public class Classifier : PipelineBase, IDistanceClassifier
     {
         public Func<double[], double[], double> DistanceFunction { get; set; }
 
         public List<FeatureDescriptor> Features { get; set; }
 
-        public double MultiolicationFactor { get; set; } = 1;
+        public double MultiplicationFactor { get; set; } = 1;
 
         public Classifier(Func<double[], double[], double> distanceMethod)
         {
             this.DistanceFunction = distanceMethod;
             Features = new List<FeatureDescriptor>();
-        }
-
-        public double Test(ISignerModel model, Signature signature)
-        {
-            throw new NotImplementedException();
         }
 
         public ISignerModel Train(List<Signature> signatures)
@@ -74,9 +69,54 @@ namespace Onlab2
                 }
             }
 
+            var distances = distanceMatrix.GetValues().Where(v => v != 0);
+            var mean = distances.Average();
+            var stdev = Math.Sqrt(distances.Select(d => (d - mean) * (d - mean)).Sum() / (distances.Count() - 1));
 
+            double med;
+            var orderedDistances = new List<double>(distances).OrderBy(d => d);
+            if (orderedDistances.Count() % 2 == 0)
+            {
+                int i = orderedDistances.Count() / 2;
+                med = (orderedDistances.ElementAt(i - 1) + orderedDistances.ElementAt(i)) / 2.0;
+            }
+            else
+            {
+                int i = orderedDistances.Count() / 2;
+                med = orderedDistances.ElementAt(i);
+            }
+
+            return new SignerModel
+            {
+                SignerID = signerID,
+                GenuineSignatures = genuines.Select(g => new KeyValuePair<string, double[][]>(g.ID, g.Features)).ToList(),
+                DistanceMatrix = distanceMatrix,
+                Threshold = mean + MultiplicationFactor * stdev
+                
+            };
 
 
         }
-    }*/
+
+        public double Test(ISignerModel model, Signature signature)
+        {
+            var dtwModel = (SignerModel)model;
+            var testSignature = signature.GetAggregateFeature(Features).ToArray();
+            var distances = new double[dtwModel.GenuineSignatures.Count];
+            LocalDistance diff = new LocalDistance();
+
+            for (int i = 0; i < dtwModel.GenuineSignatures.Count; i++)
+            {
+                distances[i] = ImprovedDTW.CalculateDTW(dtwModel.GenuineSignatures[i].Value, testSignature, DistanceFunction, diff.LocalDifference);
+                dtwModel.DistanceMatrix[signature.ID, dtwModel.GenuineSignatures[i].Key] = distances[i];
+                this.LogTrace(new ClassifierDistanceLogState(model.SignerID, signature?.Signer.ID, dtwModel.GenuineSignatures[i].Key, signature.ID, distances[i]));
+            }
+
+            
+            return Math.Max(1 - (distances.Average() / dtwModel.Threshold) / 2, 0);
+
+        }
+
+
+    }
 }
