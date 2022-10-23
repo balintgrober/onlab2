@@ -1,4 +1,5 @@
 ﻿using SigStat.Common;
+using SigStat.Common.Loaders;
 using SigStat.Common.Logging;
 using SigStat.Common.Pipeline;
 using System;
@@ -31,6 +32,8 @@ namespace Onlab2
 
         public double MultiplicationFactor { get; set; } = 1;
 
+        public double GenuineAverageTime { get; set; }
+
         public Classifier(Func<double[], double[], double> distanceMethod)
         {
             this.DistanceFunction = distanceMethod;
@@ -42,6 +45,7 @@ namespace Onlab2
             if (signatures == null || signatures.Count == 0)
                 throw new ArgumentException("Argument 'signatures' can not be null or an empty list", nameof(signatures));
             var signerID = signatures[0].Signer?.ID;
+            GenuninesAverageTimeCost(signatures);
             var genuines = signatures.Where(s => s.Origin == Origin.Genuine)
                 .Select(s => new { s.ID, Features = s.GetAggregateFeature(Features).ToArray() }).ToList();
             var distanceMatrix = new DistanceMatrix<string, string, double>();
@@ -108,13 +112,39 @@ namespace Onlab2
             for (int i = 0; i < dtwModel.GenuineSignatures.Count; i++)
             {
                 distances[i] = ImprovedDTW.CalculateDTW(dtwModel.GenuineSignatures[i].Value, testSignature, DistanceFunction, diff.LocalDifference);
-                dtwModel.DistanceMatrix[signature.ID, dtwModel.GenuineSignatures[i].Key] = distances[i];
+                dtwModel.DistanceMatrix[signature.ID, dtwModel.GenuineSignatures[i].Key] = distances[i] * TimeCost(signature);
                 this.LogTrace(new ClassifierDistanceLogState(model.SignerID, signature?.Signer.ID, dtwModel.GenuineSignatures[i].Key, signature.ID, distances[i]));
             }
 
             
             return Math.Max(1 - (distances.Average() / dtwModel.Threshold) / 2, 0);
 
+        }
+
+        private void GenuninesAverageTimeCost(List<Signature> signatures)
+        {
+            var genuinesTime = signatures.Where(s => s.Origin == Origin.Genuine).Select(s => new { s.ID, Features = s.GetFeature(Svc2004.T).ToArray() }).ToList();
+            double time = 0;
+            foreach (var signature in genuinesTime)
+            {
+                DateTime first = DateTimeOffset.FromUnixTimeSeconds(signature.Features[0]).DateTime;
+                DateTime last = DateTimeOffset.FromUnixTimeSeconds(signature.Features.Last()).DateTime;
+
+                time += (last - first).TotalSeconds;
+            }
+            GenuineAverageTime = time / genuinesTime.Count;
+        }
+
+        private double TimeCost(Signature candidate)
+        {
+            double time = 0;
+            int firstTimestamp = candidate.GetFeature(Svc2004.T)[0];
+            int lastTimestamp = candidate.GetFeature(Svc2004.T).Last();
+            DateTime first = DateTimeOffset.FromUnixTimeMilliseconds(firstTimestamp).DateTime;
+            DateTime last = DateTimeOffset.FromUnixTimeMilliseconds(lastTimestamp).DateTime;
+            time = (last - first).TotalSeconds;
+
+            return time / GenuineAverageTime;
         }
 
 

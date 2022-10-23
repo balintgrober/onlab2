@@ -5,8 +5,12 @@ using System.Linq;
 using SigStat.Common;
 using SigStat.Common.Algorithms.Distances;
 using SigStat.Common.Loaders;
+using SigStat.Common.Logging;
+using SigStat.Common.Model;
 using SigStat.Common.Pipeline;
 using SigStat.Common.PipelineItems.Classifiers;
+using SigStat.Common.PipelineItems.Transforms.Preprocessing;
+using SigStat.Common.Transforms;
 
 namespace Onlab2
 {
@@ -19,7 +23,30 @@ namespace Onlab2
 
             Signer signer1 = signers[0];
             List<Signature> signer1Signatures = signer1.Signatures;
-            Signature signature1 = signer1Signatures[0];
+
+            LocalDistance distance = new LocalDistance();
+            var verifier = new Verifier(new SimpleConsoleLogger())
+            {
+                Pipeline = new SequentialTransformPipeline()
+                {
+                    new ParallelTransformPipeline()
+                    {
+                        new ZNormalization() { InputFeature = Features.X },
+                        new ZNormalization() { InputFeature = Features.Y }
+                    },
+                },
+                Classifier = new Classifier(distance.Calculate)
+                {
+                    Features = new List<FeatureDescriptor>() { Features.X, Features.Y } 
+                }
+            };
+
+            verifier.Train(signer1Signatures);
+            Console.WriteLine(verifier.Test(signer1Signatures[1]));
+            Console.WriteLine(verifier.Test(signer1Signatures[33]));
+
+
+            /*Signature signature1 = signer1Signatures[0];
             Signature signature2 = signer1Signatures[1];
 
             List<FeatureDescriptor> featureDescriptors = new List<FeatureDescriptor>();
@@ -30,8 +57,8 @@ namespace Onlab2
             List<double[]> sequence2 = signature2.GetAggregateFeature(featureDescriptors);
 
 
-            //TestDTW(sequence1, sequence2);
-            TestClassifier(signer1);
+            TestDTW(sequence1, sequence2);
+            TestClassifier(signer1);*/
             
 
             
