@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SigStat.Common;
 using SigStat.Common.Algorithms.Distances;
+using SigStat.Common.Framework.Samplers;
 using SigStat.Common.Loaders;
 using SigStat.Common.Logging;
 using SigStat.Common.Model;
@@ -25,7 +26,56 @@ namespace Onlab2
             List<Signature> signer1Signatures = signer1.Signatures;
 
             LocalDistance distance = new LocalDistance();
-            var verifier = new Verifier(new SimpleConsoleLogger())
+
+            var benchmark = new VerifierBenchmark()
+            {
+                Loader = svc2004Loader,
+                Verifier = new Verifier(new SimpleConsoleLogger())
+                {
+                    Pipeline = new SequentialTransformPipeline()
+                    {
+                        new ZNormalization() { InputFeature = Features.X, OutputFeature = Features.X},
+                        new ZNormalization() { InputFeature = Features.Y, OutputFeature = Features.Y},
+                        new ZNormalization() { InputFeature = Features.Pressure, OutputFeature = Features.Pressure}
+                    },
+                    Classifier = new Classifier(distance.Calculate)
+                    {
+                        Features = new List<FeatureDescriptor>() { Features.X, Features.Y }
+                    }
+                },
+                Sampler = new FirstNSampler()
+            };
+
+            var benchmarkFramework = new VerifierBenchmark()
+            {
+                Loader = svc2004Loader,
+                Verifier = new Verifier(new SimpleConsoleLogger())
+                {
+                    Pipeline = new SequentialTransformPipeline()
+                    {
+                        new ZNormalization() { InputFeature = Features.X, OutputFeature = Features.X},
+                        new ZNormalization() { InputFeature = Features.Y, OutputFeature = Features.Y},
+                        new ZNormalization() { InputFeature = Features.Pressure, OutputFeature = Features.Pressure}
+                    },
+                    Classifier = new DtwClassifier()
+                    {
+                        Features = new List<FeatureDescriptor>() { Features.X, Features.Y }
+                    }
+                },
+                Sampler = new FirstNSampler()
+            };
+
+            var result = benchmark.Execute(true);
+            Console.WriteLine($"AER: {result.FinalResult.Aer}");
+            Console.WriteLine($"FRR: {result.FinalResult.Frr}");
+            Console.WriteLine($"FAR: {result.FinalResult.Far}");
+
+            var resultFramework = benchmarkFramework.Execute(true);
+            Console.WriteLine($"AER (framework): {resultFramework.FinalResult.Aer}");
+            Console.WriteLine($"FRR (framework): {resultFramework.FinalResult.Frr}");
+            Console.WriteLine($"FAR (framework): {resultFramework.FinalResult.Far}");
+
+            /*var verifier = new Verifier(new SimpleConsoleLogger())
             {
                 Pipeline = new SequentialTransformPipeline()
                 {
@@ -43,7 +93,7 @@ namespace Onlab2
 
             verifier.Train(signer1Signatures);
             Console.WriteLine(verifier.Test(signer1Signatures[1]));
-            Console.WriteLine(verifier.Test(signer1Signatures[33]));
+            Console.WriteLine(verifier.Test(signer1Signatures[33]));*/
 
 
             /*Signature signature1 = signer1Signatures[0];
