@@ -74,7 +74,8 @@ namespace Onlab2
             }
 
             var distances = distanceMatrix.GetValues().Where(v => v != 0).ToArray();
-            var mean = distances.Min();
+            var min = distances.Min();
+            var mean = distances.Average();
             var stdev = Math.Sqrt(distances.Select(d => (d - mean) * (d - mean)).Sum() / (distances.Count() - 1));
 
             double med;
@@ -90,14 +91,14 @@ namespace Onlab2
                 med = orderedDistances.ElementAt(i);
             }
 
-            Console.WriteLine($"Threshold: {mean + MultiplicationFactor * stdev}");
+            Console.WriteLine($"Threshold: {mean + med / 3 /*+ MultiplicationFactor * stdev*/}");
 
             return new SignerModel
             {
                 SignerID = signerID,
                 GenuineSignatures = genuines.Select(g => new KeyValuePair<string, double[][]>(g.ID, g.Features)).ToList(),
                 DistanceMatrix = distanceMatrix,
-                Threshold = mean + MultiplicationFactor * stdev
+                Threshold = mean + med / 3 //+ MultiplicationFactor * stdev
                 
             };
 
