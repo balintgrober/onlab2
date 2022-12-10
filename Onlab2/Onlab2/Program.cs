@@ -65,6 +65,25 @@ namespace Onlab2
                 Sampler = new FirstNSampler()
             };
 
+            var benchmarkOptimalClassifier = new VerifierBenchmark()
+            {
+                Loader = svc2004Loader,
+                Verifier = new Verifier(new SimpleConsoleLogger())
+                {
+                    Pipeline = new SequentialTransformPipeline()
+                    {
+                        new ZNormalization() { InputFeature = Features.X, OutputFeature = Features.X},
+                        new ZNormalization() { InputFeature = Features.Y, OutputFeature = Features.Y},
+                        new ZNormalization() { InputFeature = Features.Pressure, OutputFeature = Features.Pressure}
+                    },
+                    Classifier = new OptimalClassifier()
+                    {
+                        Features = new List<FeatureDescriptor>() { Features.X, Features.Y }
+                    }
+                },
+                Sampler = new FirstNSampler()
+            };
+
             var result = benchmark.Execute(true);
             Console.WriteLine($"AER: {result.FinalResult.Aer}");
             Console.WriteLine($"FRR: {result.FinalResult.Frr}");
@@ -74,6 +93,11 @@ namespace Onlab2
             Console.WriteLine($"AER (framework): {resultFramework.FinalResult.Aer}");
             Console.WriteLine($"FRR (framework): {resultFramework.FinalResult.Frr}");
             Console.WriteLine($"FAR (framework): {resultFramework.FinalResult.Far}");
+
+            var resultOptimalClassifier = benchmarkOptimalClassifier.Execute(true);
+            Console.WriteLine($"AER (optimal classifier): {resultOptimalClassifier.FinalResult.Aer}");
+            Console.WriteLine($"FRR (optimal classifier): {resultOptimalClassifier.FinalResult.Frr}");
+            Console.WriteLine($"FAR (optimal classifier): {resultOptimalClassifier.FinalResult.Far}");
 
             /*var verifier = new Verifier(new SimpleConsoleLogger())
             {
@@ -109,9 +133,9 @@ namespace Onlab2
 
             TestDTW(sequence1, sequence2);
             TestClassifier(signer1);*/
-            
 
-            
+
+
         }
 
         private static void TestDTW(List<double[]> sequence1, List<double[]> sequence2)
