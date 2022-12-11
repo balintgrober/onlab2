@@ -1,5 +1,6 @@
 ﻿using SigStat.Common;
 using SigStat.Common.Framework.Samplers;
+using SigStat.Common.Loaders;
 using SigStat.Common.Logging;
 using SigStat.Common.Pipeline;
 using System;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Onlab2
 {
-    public class OptimalClassifier : PipelineBase, IDistanceClassifier
+    public class OptimalClassifier : SigStat.Common.PipelineItems.Classifiers.OptimalDtwClassifier, IDistanceClassifier
     {
 
         struct SignatureDistance
@@ -156,6 +157,7 @@ namespace Onlab2
                 return 0;
 
         }
+
     }
 
 }
